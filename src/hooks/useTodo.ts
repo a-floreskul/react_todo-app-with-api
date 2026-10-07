@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { getTodos, addTodo, removeTodo, USER_ID } from '../api/todos';
+import {
+  getTodos,
+  addTodo,
+  removeTodo,
+  updateTodoStatus,
+  USER_ID,
+} from '../api/todos';
 import { Filter } from '../types/Filter';
 import { Todo } from '../types/Todo';
 
@@ -94,6 +100,45 @@ export const useTodos = () => {
     return Promise.all(completedTodos.map(todo => deleteTodo(todo.id)));
   };
 
+  const changeTodoStatus = (todoId: number): Promise<boolean> => {
+    setLoadingIds(current => [...current, todoId]);
+
+    const currentTodo = todos.find(item => item.id === todoId);
+
+    if (!currentTodo) {
+      setErrorMessage('Unable to update a todo');
+
+      return Promise.resolve(false);
+    }
+
+    const newValue = !currentTodo.completed;
+
+    return updateTodoStatus(todoId, newValue)
+      .then(() => {
+        setTodos(current =>
+          current.map(todo =>
+            todo.id === todoId ? { ...todo, completed: newValue } : todo,
+          ),
+        );
+
+        return true;
+      })
+      .catch(() => {
+        setErrorMessage('Unable to update a todo');
+
+        return false;
+      })
+      .finally(() => {
+        setLoadingIds(current => current.filter(id => id !== todoId));
+      });
+  };
+
+  const uncompleteAll = () => {
+    const completedTodos = todos.filter(todo => todo.completed);
+
+    return Promise.all(completedTodos.map(todo => changeTodoStatus(todo.id)));
+  };
+
   return {
     todos,
     visibleTodos,
@@ -108,5 +153,7 @@ export const useTodos = () => {
     deleteTodo,
     loadingIds,
     clearCompleted,
+    changeTodoStatus,
+    uncompleteAll,
   };
 };

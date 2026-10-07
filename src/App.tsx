@@ -25,6 +25,8 @@ export const App: React.FC = () => {
     deleteTodo,
     loadingIds,
     clearCompleted,
+    changeTodoStatus,
+    uncompleteAll,
   } = useTodos();
 
   const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
@@ -44,6 +46,7 @@ export const App: React.FC = () => {
           onError={setErrorMessage}
           isDisabled={!!tmpTodo}
           todosCount={todos.length}
+          onUncompleteAll={uncompleteAll}
         />
 
         <TodoList
@@ -51,6 +54,7 @@ export const App: React.FC = () => {
           currentTodo={tmpTodo}
           loadingIds={loadingIds}
           onDelete={deleteTodo}
+          onChange={changeTodoStatus}
         />
 
         {todos.length > 0 && (

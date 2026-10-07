@@ -6,12 +6,14 @@ type Props = {
   todo: Todo;
   isLoading?: boolean;
   onDelete?: (todoId: number) => Promise<boolean>;
+  onChange?: (todoId: number) => Promise<boolean>;
 };
 
 export const TodoItem: React.FC<Props> = ({
   todo,
   isLoading = false,
   onDelete,
+  onChange,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(todo.title);
@@ -36,6 +38,7 @@ export const TodoItem: React.FC<Props> = ({
           checked={todo.completed}
           readOnly
           aria-label="Toggle todo status"
+          onChange={() => onChange?.(todo.id)}
         />
       </label>
 
