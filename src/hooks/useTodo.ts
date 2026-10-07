@@ -3,7 +3,7 @@ import {
   getTodos,
   addTodo,
   removeTodo,
-  updateTodoStatus,
+  updateTodo,
   USER_ID,
 } from '../api/todos';
 import { Filter } from '../types/Filter';
@@ -26,6 +26,8 @@ export const useTodos = () => {
   const [filter, setFilter] = useState<Filter>(Filter.All);
   const [tmpTodo, setTmpTodo] = useState<Todo | null>(null);
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
+
+  const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
 
   useEffect(() => {
     if (!USER_ID) {
@@ -113,7 +115,7 @@ export const useTodos = () => {
 
     const newValue = !currentTodo.completed;
 
-    return updateTodoStatus(todoId, newValue)
+    return updateTodo(todoId, { completed: newValue })
       .then(() => {
         setTodos(current =>
           current.map(todo =>
@@ -133,10 +135,60 @@ export const useTodos = () => {
       });
   };
 
-  const uncompleteAll = () => {
-    const completedTodos = todos.filter(todo => todo.completed);
+  const toggleAll = () => {
+    const newStatus = !allCompleted;
 
-    return Promise.all(completedTodos.map(todo => changeTodoStatus(todo.id)));
+    const todosToUpdate = todos.filter(todo => todo.completed !== newStatus);
+    const idsToUpdate = todosToUpdate.map(todo => todo.id);
+
+    setLoadingIds(current => [...current, ...idsToUpdate]);
+
+    return Promise.allSettled(
+      todosToUpdate.map(todo =>
+        updateTodo(todo.id, { completed: newStatus }).then(updatedTodo => {
+          setTodos(current =>
+            current.map(item => (item.id === todo.id ? updatedTodo : item)),
+          );
+        }),
+      ),
+    ).then(results => {
+      if (results.some(result => result.status === 'rejected')) {
+        setErrorMessage('Unable to update a todo');
+      }
+
+      setLoadingIds(current => current.filter(id => !idsToUpdate.includes(id)));
+    });
+  };
+
+  const changeTodoTitle = (todoId: number, title: string) => {
+    setLoadingIds(current => [...current, todoId]);
+
+    const currentTodo = todos.find(item => item.id === todoId);
+
+    if (!currentTodo) {
+      setErrorMessage('Unable to update a todo');
+
+      return Promise.resolve(false);
+    }
+
+    return updateTodo(todoId, { title: title })
+      .then(() => {
+        setTodos(current =>
+          current.map(todo =>
+            todo.id === todoId ? { ...todo, title: title } : todo,
+          ),
+        );
+
+        return true;
+      })
+      .catch(() => {
+        setErrorMessage('Unable to update a todo');
+
+        return false;
+      })
+      .finally(() => {
+        setLoadingIds(current => current.filter(id => id !== todoId));
+      });
   };
 
   return {
@@ -144,6 +196,7 @@ export const useTodos = () => {
     visibleTodos,
     activeCount,
     hasCompleted,
+    allCompleted,
     filter,
     setFilter,
     errorMessage,
@@ -154,6 +207,7 @@ export const useTodos = () => {
     loadingIds,
     clearCompleted,
     changeTodoStatus,
-    uncompleteAll,
+    toggleAll,
+    changeTodoTitle,
   };
 };

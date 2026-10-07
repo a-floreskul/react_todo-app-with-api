@@ -7,7 +7,7 @@ type Props = {
   onError: (message: string) => void;
   isDisabled: boolean;
   todosCount: number;
-  onUncompleteAll: () => void;
+  toggleAll: () => void;
 };
 
 export const Header: React.FC<Props> = ({
@@ -16,7 +16,7 @@ export const Header: React.FC<Props> = ({
   onError,
   isDisabled,
   todosCount,
-  onUncompleteAll,
+  toggleAll,
 }) => {
   const [title, setTitle] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,15 +47,16 @@ export const Header: React.FC<Props> = ({
 
   return (
     <header className="todoapp__header">
-      <button
-        type="button"
-        className={classNames('todoapp__toggle-all', {
-          active: allCompleted,
-        })}
-        disabled={!allCompleted}
-        data-cy="ToggleAllButton"
-        onClick={onUncompleteAll}
-      />
+      {todosCount > 0 && (
+        <button
+          type="button"
+          className={classNames('todoapp__toggle-all', {
+            active: allCompleted,
+          })}
+          data-cy="ToggleAllButton"
+          onClick={toggleAll}
+        />
+      )}
 
       {/* Add a todo on form submit */}
       <form onSubmit={handleSubmit}>

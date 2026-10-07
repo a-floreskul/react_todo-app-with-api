@@ -16,6 +16,7 @@ export const App: React.FC = () => {
     visibleTodos,
     activeCount,
     hasCompleted,
+    allCompleted,
     filter,
     setFilter,
     errorMessage,
@@ -26,10 +27,9 @@ export const App: React.FC = () => {
     loadingIds,
     clearCompleted,
     changeTodoStatus,
-    uncompleteAll,
+    toggleAll,
+    changeTodoTitle,
   } = useTodos();
-
-  const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
 
   if (!USER_ID) {
     return <UserWarning />;
@@ -46,7 +46,7 @@ export const App: React.FC = () => {
           onError={setErrorMessage}
           isDisabled={!!tmpTodo}
           todosCount={todos.length}
-          onUncompleteAll={uncompleteAll}
+          toggleAll={toggleAll}
         />
 
         <TodoList
@@ -55,6 +55,7 @@ export const App: React.FC = () => {
           loadingIds={loadingIds}
           onDelete={deleteTodo}
           onChange={changeTodoStatus}
+          onUpdate={changeTodoTitle}
         />
 
         {todos.length > 0 && (

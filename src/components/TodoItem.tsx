@@ -7,6 +7,7 @@ type Props = {
   isLoading?: boolean;
   onDelete?: (todoId: number) => Promise<boolean>;
   onChange?: (todoId: number) => Promise<boolean>;
+  onUpdate?: (todoId: number, title: string) => Promise<boolean>;
 };
 
 export const TodoItem: React.FC<Props> = ({
@@ -14,6 +15,7 @@ export const TodoItem: React.FC<Props> = ({
   isLoading = false,
   onDelete,
   onChange,
+  onUpdate,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(todo.title);
@@ -23,6 +25,33 @@ export const TodoItem: React.FC<Props> = ({
       setEditedTitle(todo.title);
       setIsEditing(false);
     }
+  };
+
+  const handleSave = () => {
+    const trimmedTitle = editedTitle.trim();
+
+    if (trimmedTitle === todo.title) {
+      setIsEditing(false);
+
+      return;
+    }
+
+    if (!trimmedTitle) {
+      onDelete?.(todo.id);
+
+      return;
+    }
+
+    onUpdate?.(todo.id, trimmedTitle).then(isUpdated => {
+      if (isUpdated) {
+        setIsEditing(false);
+      }
+    });
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    handleSave();
   };
 
   return (
@@ -43,7 +72,7 @@ export const TodoItem: React.FC<Props> = ({
       </label>
 
       {isEditing ? (
-        <form onSubmit={event => event.preventDefault()}>
+        <form onSubmit={handleSubmit}>
           <input
             data-cy="TodoTitleField"
             type="text"
@@ -52,7 +81,7 @@ export const TodoItem: React.FC<Props> = ({
             value={editedTitle}
             onChange={event => setEditedTitle(event.target.value)}
             onKeyUp={handleKeyUp}
-            onBlur={() => setIsEditing(false)}
+            onBlur={handleSave}
             autoFocus
           />
         </form>
